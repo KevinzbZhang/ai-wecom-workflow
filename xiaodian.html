@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>消费品小店广告销售流程图</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;background:#fff;color:#1a202c;display:flex;flex-direction:column}
+.hd{background:#e65100;color:#fff;padding:14px 24px;text-align:center;flex-shrink:0}
+.hd h1{font-size:18px;margin-bottom:2px}
+.hd p{font-size:11px;opacity:.7}
+.toolbar{display:flex;gap:8px;align-items:center;padding:8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;flex-wrap:wrap}
+.toolbar .left{display:flex;gap:6px;align-items:center}
+.toolbar .right{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:12px;color:#64748b}
+.toolbar .right span{display:flex;align-items:center;gap:4px}
+.toolbar .right i{display:inline-block;width:16px;height:12px;border-radius:2px;border:2px solid}
+.btn{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;color:#475569;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:#f1f5f9;border-color:#94a3b8}
+.zoom-info{font-size:11px;color:#94a3b8;min-width:40px;text-align:center}
+.sep{width:1px;height:20px;background:#e2e8f0}
+.wrap{flex:1;overflow:scroll;position:relative}
+svg text{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;user-select:none}
+</style>
+</head>
+<body>
+<div class="hd">
+<h1>消费品小店广告销售流程图</h1>
+<p>角色：亮哥（腾讯广告官方运营顾问）｜ S1-S8 完整 SOP ｜ AI企微全程自营·无拉群 ｜ v2.0</p>
+</div>
+<div class="toolbar">
+<div class="left">
+  <button class="btn" onclick="zoomIn()">🔍+</button>
+  <button class="btn" onclick="zoomOut()">🔍−</button>
+  <button class="btn" onclick="zoomReset()">还原</button>
+  <span class="zoom-info" id="zoomInfo">100%</span>
+  <div class="sep"></div>
+  <button class="btn" onclick="fitScreen()">适应窗口</button>
+</div>
+<div class="right">
+  <span><i style="background:#e3f2fd;border-color:#1565c0"></i>阶段</span>
+  <span><i style="background:#fff3e0;border-color:#e65100"></i>关键阶段</span>
+  <span><i style="background:#f0fdf4;border-color:#16a34a"></i>话术/动作</span>
+  <span><i style="background:#fffbeb;border-color:#d97706;border-radius:0;transform:rotate(45deg) scale(.7)"></i>判断</span>
+  <span><i style="background:#fef2f2;border-color:#dc2626"></i>终态</span>
+  <span><i style="background:#f3e5f5;border-color:#6a1b9a"></i>跟进/激活</span>
+</div>
+</div>
+<div class="wrap" id="wrap">
+<svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('canvas');
+const wrap=document.getElementById('wrap');
+let scale=1;
+let canvasW=2400, canvasH=5000;
+
+// ========== 缩放 ==========
+function setScale(s){
+  scale=Math.max(0.2,Math.min(3,s));
+  svg.setAttribute('width', Math.ceil(canvasW*scale));
+  svg.setAttribute('height', Math.ceil(canvasH*scale));
+  document.getElementById('zoomInfo').textContent=Math.round(scale*100)+'%';
+}
+function zoomIn(){setScale(scale+0.15)}
+function zoomOut(){setScale(scale-0.15)}
+function zoomReset(){setScale(1);wrap.scrollTop=0;wrap.scrollLeft=0;}
+function fitScreen(){
+  const sw=wrap.clientWidth,sh=wrap.clientHeight;
+  setScale(Math.min(sw/canvasW,sh/canvasH)*0.95);
+  wrap.scrollTop=0;wrap.scrollLeft=0;
+}
+wrap.addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.metaKey){
+    e.preventDefault();
+    const rect=wrap.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const oldScale=scale;
+    const newScale=Math.max(0.2,Math.min(3,scale+(e.deltaY<0?0.08:-0.08)));
+    const lx=(wrap.scrollLeft+mx)/oldScale;
+    const ly=(wrap.scrollTop+my)/oldScale;
+    setScale(newScale);
+    wrap.scrollLeft=lx*scale-mx;
+    wrap.scrollTop=ly*scale-my;
+  }
+},{passive:false});
+
+// ========== 布局 ==========
+const COL=250, ROW=90;
+function cx(col){return 240+col*COL}
+function cy(row){return 50+row*ROW}
+
+const LINE_H=14, PAD_V=16;
+function autoH(textLines, minH){
+  const lines=Array.isArray(textLines)?textLines:[textLines];
+  return Math.max(minH||0, lines.length*LINE_H+PAD_V);
+}
+
+// ================================================================
+//  严格按 SOP 的节点数据
+// ================================================================
+const N={
+
+  // ===== S1 行业未知 =====
+  s1:       {type:'stage', x:cx(2),y:cy(0), w:160, text:'S1 行业未知',color:'#1565c0'},
+  s1_talk:  {type:'talk',  x:cx(2),y:cy(1), w:300, text:['💬 您好！我是腾讯广告的','运营经理亮哥～','您主要做哪类产品？','（询问主营产品+客单价，判断禁投）']},
+  s1_d:     {type:'decision',x:cx(2),y:cy(2.6), s:80, text:'行业分流？'},
+  // S1 三条分流终态
+  end_ban:  {type:'end',   x:cx(4.2),y:cy(1.5), w:150, text:'🚫 禁投/不适合',color:'#78909c'},
+  end_ban_talk:{type:'talk', x:cx(4.2),y:cy(2.6), w:220, text:['💬 您这个品类目前平台','暂不支持推广，非常抱歉。','如后续有变化第一时间通知您～']},
+  // 不适合小店但适合ADQ → S6（非小店路径）
+  s1_adq:   {type:'talk',  x:cx(4.2),y:cy(4.2), w:280, text:['💬 您这类产品更适合用ADQ','（腾讯广告投放平台）来推广，','可以做线索收集/表单提交/加粉等','我给您详细介绍一下？']},
+
+  // ===== S2 可开微信小店·未开 =====
+  s2:       {type:'stage', x:cx(2),y:cy(4.2), w:230, text:'S2 可开微信小店·未开',color:'#e65100'},
+  s2_talk:  {type:'talk',  x:cx(2),y:cy(5.6), w:330, text:['💬 现在视频号和小店是腾讯最大的红利，','入局门槛比两年前低很多，能直接撬动','微信的公域流量。','平台对新入驻商家有专门的扶持激励政策，','您先把店开起来，直接搭上这波生态红利。','📎 发送：开店指引+一对一协助']},
+  s2_d:     {type:'decision',x:cx(2),y:cy(7.4), s:70, text:'同意开店？'},
+  s2_follow:{type:'talk',  x:cx(2),y:cy(8.6), w:280, text:['⏰ 跟进开店进度：','已开始申请了吗？','有什么问题随时问我']},
+  // S2 拒绝分支
+  s2_refuse:{type:'talk',  x:cx(0),y:cy(7.4), w:260, text:['💬 没关系，先了解着～','（标记拒绝原因，定期温和触达）']},
+  end_s2_wait:{type:'end', x:cx(0),y:cy(8.6), w:160, text:'📋 定期温和触达',color:'#6a1b9a'},
+  // S2 常见疑虑
+  s2_faq:   {type:'talk',  x:cx(0),y:cy(5.6), w:260, text:['❓ 常见疑虑应对：','「不懂电商」→ 比淘宝简单，先开慢慢学','「没货源」→ 先上自己产品试水','「没时间」→ 半小时搞定，发教程','「怕卖不动」→ 先开着，不开没机会']},
+
+  // ===== S3 已开小店·未注册小店广告 =====
+  s3:       {type:'stage', x:cx(2),y:cy(10), w:280, text:'S3 已开小店·未注册小店广告',color:'#e65100'},
+  s3_talk:  {type:'talk',  x:cx(2),y:cy(11.4), w:340, text:['💬 了解经营情况并给投放建议：','• 主要货品、客单价、小店销量情况','• 销售路径：直播/短视频带货/达人分销？','• 付费投流经验：微信豆ROI/千川ROI？','┌ 做直播 → 小店广告做直播推广，引精准人群','├ 做短视频 → 商品托管，放到更多地方曝光','└ 做达人分销 → 分销素材做商品推广','📎 强调「不成单不扣费」，引导注册+投放']},
+  s3_d:     {type:'decision',x:cx(2),y:cy(13.4), s:70, text:'开通小店广告？'},
+  s3_faq:   {type:'talk',  x:cx(0),y:cy(13.4), w:280, text:['❓ 顾虑应对：','「光靠自然流」→ 付费撬动免费的杠杆','「怕花钱」→ 不成单不扣费，零风险','「不会投」→ 投放简单，全程指导','📎 展示同类目成功案例（ROI数据）']},
+  s3_confirm:{type:'talk', x:cx(2),y:cy(14.8), w:280, text:['⏰ 跟进是否开通成功：','可以截个小店广告界面的图给我看看？']},
+
+  // ===== S4 已开小店广告·未投放 =====
+  s4:       {type:'stage', x:cx(2),y:cy(16.4), w:280, text:'S4 已开小店广告·未投放',color:'#e65100'},
+  s4_talk:  {type:'talk',  x:cx(2),y:cy(17.8), w:350, text:['💬 投放能力诊断（3个必问）：','❶ 是否在做直播？','❷ 是否有投放素材制作能力？','❸ 是否有投放经验和人员？']},
+  s4_solve: {type:'talk',  x:cx(2),y:cy(19.2), w:350, text:['💡 根据诊断结果解决痛点：','┌ 素材问题 → 零门槛，AI智能生成','├ 不会投 → 智能托管，操作简单，全程陪跑','├ 怕亏钱 → 不成单不扣费，零风险','└ 违规/三率问题 → 给指导建议，解除后引导','🤝 手把手指导：让客户截图，','指导搭建第一条广告']},
+  s4_d:     {type:'decision',x:cx(2),y:cy(21), s:70, text:'开始投放？'},
+  s4_wait:  {type:'talk',  x:cx(0),y:cy(21), w:260, text:['💬 先拿几百块试试水，','主要看看品的点击率。','系统很智能，一看就会用，','有问题也可以随时问我。','（定期跟进，分析卡点）']},
+
+  // ===== S5 小店广告投放中·有消耗 =====
+  s5:       {type:'stage', x:cx(2),y:cy(22.8), w:300, text:'S5 小店广告投放中·6维诊断',color:'#1565c0'},
+  s5_talk:  {type:'talk',  x:cx(2),y:cy(24.6), w:360, text:['💬 建议先看数据，针对不同情况优化：','❶ 素材：每条广告≥3个视频，最好40个拉满','  无素材能力→深耕主图+商详+推荐妙思AI','  点击率/3s完播率低→优化替换','❷ 定向：除性别年龄外，建议放开跑通投','❸ 基建：计划数不够→多建测试','  有直播→直播广告+商品托管','  无直播→商品托管，托管商品≥6个','❹ 直播承接：直播间话术/氛围留人？','❺ 出价预算：参考系统建议ROI/出价','  预算≥5倍出价（最低300元），建议≥10倍','❻ 推广时长：尽量选15天']},
+  s5_d:     {type:'decision',x:cx(2),y:cy(27.2), s:70, text:'投放效果？'},
+  s5_adjust:{type:'talk',  x:cx(0),y:cy(27.2), w:280, text:['💬 调整后跑2-3天看数据变化，','我们再一起复盘。','如效果仍差→分析深层原因','可能需要换品/换策略']},
+
+  // ===== S6 引导ADQ =====
+  s6:       {type:'stage', x:cx(2),y:cy(29), w:240, text:'S6 引导ADQ',color:'#16a34a'},
+  // 从小店引导来的话术
+  s6_talk_from_shop:{type:'talk', x:cx(1),y:cy(30.6), w:340, text:['💬【从小店引导ADQ】','小店广告的量已经很稳了，','如果想进一步把规模做大，','得靠ADQ去其他流量池"捞人"，','两个投放工具是可以互补的。','┌ ADQ优势：对标千川的专业投放工具','├ 操作简单：2步开户、智投极简操作','├ 成本保障：超成本赔付，不满意随时退款','├ 免费工具：视频混剪、数字人直播等','└ 多玩法：老客覆盖、会员营销、企微加粉等']},
+  // 从非小店引导来的话术（S1分流）
+  s6_talk_from_direct:{type:'talk', x:cx(3.2),y:cy(30.6), w:340, text:['💬【非小店·直接引导ADQ】','您这类产品更适合用ADQ来推广：','ADQ是腾讯广告主力投放平台，','覆盖朋友圈+视频号+公众号+小程序全域。','┌ 专业投放：对标千川','├ 2步开户：操作极简','├ 成本保障：超成本赔付，不满意退款','├ 免费工具：视频混剪、数字人直播','└ 私域沉淀：企微加粉、公众号关注等','📎 发送：ADQ开户链接']},
+  s6_d:     {type:'decision',x:cx(2),y:cy(32.8), s:70, text:'同意开ADQ？'},
+  s6_wait:  {type:'talk',  x:cx(0),y:cy(32.8), w:240, text:['💬 没关系，等时机成熟再考虑','（适时再引导）']},
+
+  // ===== S7 ADQ已开户·未充值 =====
+  s7:       {type:'stage', x:cx(2),y:cy(34.6), w:280, text:'S7 ADQ已开户·未充值',color:'#16a34a'},
+  s7_talk:  {type:'talk',  x:cx(2),y:cy(36.2), w:360, text:['💬 ❶ 询问卡点和顾虑：','  后台操作复杂？→ 推荐小店艾米智投','  有私域需求？→ 强调ADQ对私域/加粉独特优势','❷ 必须询问开户主体名称（查询信息用）','❸ 提供同行ADQ投放案例','❹ ADQ投放指导（智投搭建SOP）：','  • 视频号+微信小店授权，提交行业资质','  • 每个热门商品≥1条广告','  • 有直播→至少建1条直播广告','  • 上传15条视频素材','  • 不选全店托管和短直双开','  • 优化目标选下单，出价按保本成本线']},
+  s7_train: {type:'talk',  x:cx(2),y:cy(38.6), w:340, text:['📣 直播培训课 Push：','尊敬的老板，开工大吉！','🎓「新手村直播培训课」下午15:30','内容：AMI+投放广告，60分钟高能干货','在线答疑+一对一上麦发言','👉 腾讯会议链接+会议号','⚠️ 入会请改群昵称为"xx公司-xx"']},
+  s7_d:     {type:'decision',x:cx(2),y:cy(40.4), s:70, text:'完成充值投放？'},
+  s7_stuck: {type:'talk',  x:cx(0),y:cy(40.4), w:260, text:['💬 ADQ后台看着复杂，','其实做电商主要用"商品广告"，','系统会自动找人。','既然户都开了不如试试看。','（持续跟进）']},
+  s7_login: {type:'talk',  x:cx(0),y:cy(38.6), w:300, text:['📎 登录指引：','复制 https://e.qq.com/ads','到浏览器打开 → 右上角【登录】','→ 选【我是广告主】→ 正常登录']},
+
+  // ===== S8 ADQ在投 =====
+  s8:       {type:'stage', x:cx(2),y:cy(42.4), w:180, text:'S8 ADQ在投',color:'#16a34a'},
+  s8_talk:  {type:'talk',  x:cx(2),y:cy(44), w:360, text:['💬 广告诊断调优：','上广告6h看数据→第2-3-4天看→第4-5-6天做动作','┌ ① 没曝光：检查审核/时间/定向/预算/余额','│   出价过低→提升30%；素材→开启创意优投','│   ⚠️ 禁止频繁调价(每天≤2次,否则不赔付)','├ ② 没转化：提升30%出价+追加/替换素材','├ ③ 超成本(超出价30%)：关停超成本广告','│   转化>6→换素材；无转化→重建2-3条智投','├ ④ 掉量(曝光降30%+)：检查预算/定向/','│   创意数(5条×15视频)/出价→提升30%','└ ⑤ 正常：开启创意优投，追加预算，','    补充新素材，保持跑量节奏']},
+  s8_extra: {type:'talk',  x:cx(2),y:cy(46.6), w:320, text:['🔄 持续服务：','• 建议公私域联动（有需求时）','• 大促节点提前规划','• 把公域买来的用户沉淀到私域','  这样长期ROI才能做到最高']},
+  s8_d:     {type:'decision',x:cx(2),y:cy(48), s:70, text:'投放效果？'},
+  end_ok:   {type:'end',   x:cx(3.5),y:cy(48), w:170, text:'✅ 持续优化服务',color:'#16a34a'},
+
+  // ===== 低意向/沉默 跟进 =====
+  s_low:    {type:'stage', x:cx(4.2),y:cy(22.8), w:210, text:'低意向/沉默客户跟进',color:'#6a1b9a'},
+  s_low_talk:{type:'talk', x:cx(4.2),y:cy(24), w:260, text:['💬 XX您好！好久没聊了，','最近生意怎么样呀？','平台出了些新功能/好案例','方便时回复我，发您参考～','（不过度打扰，价值触达）']},
+  s_low_d:  {type:'decision',x:cx(4.2),y:cy(25.6), s:70, text:'重新激活？'},
+  end_low:  {type:'end',   x:cx(4.2),y:cy(27), w:160, text:'📋 继续定期触达',color:'#6a1b9a'},
+};
+
+// ================================================================
+//  连线数据
+// ================================================================
+const E=[
+  // ─── S1 行业分流 ───
+  ['s1','s1_talk'],['s1_talk','s1_d'],
+  ['s1_d','s2','适合小店',{dir:'bottom'}],
+  ['s1_d','end_ban','禁投/均不适合',{dir:'right'}],
+  ['end_ban','end_ban_talk'],
+  ['s1_d','s1_adq','不适合小店\n适合ADQ',{dir:'right'}],
+  ['s1_adq','s6_talk_from_direct','有兴趣',{dir:'bottom',path:'up'}],
+
+  // ─── S2 开店 ───
+  ['s2','s2_talk'],['s2_talk','s2_d'],
+  ['s2','s2_faq','',{dir:'left'}],
+  ['s2_d','s2_follow','同意',{dir:'bottom'}],
+  ['s2_follow','s3','开店成功',{dir:'bottom'}],
+  ['s2_d','s2_refuse','拒绝',{dir:'left'}],
+  ['s2_refuse','end_s2_wait'],
+
+  // ─── S3 注册小店广告 ───
+  ['s3','s3_talk'],['s3_talk','s3_d'],
+  ['s3_d','s3_faq','有顾虑',{dir:'left'}],
+  ['s3_faq','s3_d','打消顾虑后',{dir:'bottom',path:'up'}],
+  ['s3_d','s3_confirm','有意向',{dir:'bottom'}],
+  ['s3_confirm','s4','确认开通',{dir:'bottom'}],
+
+  // ─── S4 首次投放 ───
+  ['s4','s4_talk'],['s4_talk','s4_solve'],['s4_solve','s4_d'],
+  ['s4_d','s5','开始投放',{dir:'bottom'}],
+  ['s4_d','s4_wait','未行动',{dir:'left'}],
+  ['s4_wait','s4_d','跟进后',{dir:'bottom',path:'up'}],
+
+  // ─── S5 投放诊断 ───
+  ['s5','s5_talk'],['s5_talk','s5_d'],
+  ['s5_d','s6','效果稳定/\n需要扩量',{dir:'bottom'}],
+  ['s5_d','s5_adjust','效果差',{dir:'left'}],
+  ['s5_adjust','s5','优化后',{dir:'left',path:'up'}],
+  ['s5_d','s_low','客户沉默/\n想停投',{dir:'right'}],
+
+  // ─── S6 引导ADQ ───
+  ['s6','s6_talk_from_shop','从小店引导',{dir:'left'}],
+  ['s6','s6_talk_from_direct','非小店引导',{dir:'right'}],
+  ['s6_talk_from_shop','s6_d','',{dir:'bottom'}],
+  ['s6_talk_from_direct','s6_d','',{dir:'bottom'}],
+  ['s6_d','s7','开户成功',{dir:'bottom'}],
+  ['s6_d','s6_wait','暂不考虑',{dir:'left'}],
+  ['s6_wait','s6_d','再次引导',{dir:'bottom',path:'up'}],
+
+  // ─── S7 开户未充值 ───
+  ['s7','s7_talk'],['s7_talk','s7_train'],['s7_train','s7_d'],
+  ['s7','s7_login','',{dir:'left'}],
+  ['s7_d','s8','充值并开始投放',{dir:'bottom'}],
+  ['s7_d','s7_stuck','仍未行动',{dir:'left'}],
+  ['s7_stuck','s7_d','跟进后',{dir:'bottom',path:'up'}],
+
+  // ─── S8 ADQ在投 ───
+  ['s8','s8_talk'],['s8_talk','s8_extra'],['s8_extra','s8_d'],
+  ['s8_d','end_ok','效果稳定',{dir:'right'}],
+  ['s8_d','s_low','想停投/沉默',{dir:'right',path:'curve'}],
+
+  // ─── 低意向跟进 ───
+  ['s_low','s_low_talk'],['s_low_talk','s_low_d'],
+  ['s_low_d','s5','是（回到投放）',{dir:'left',path:'up'}],
+  ['s_low_d','end_low','仍沉默',{dir:'bottom'}],
+];
+
+// ================================================================
+//  绘图引擎（与线索婚介一致）
+// ================================================================
+function ce(t){return document.createElementNS(NS,t)}
+
+function drawRect(x,y,w,h,fill,stroke,r=6,dash=false){
+  const rect=ce('rect');
+  rect.setAttribute('x',x-w/2);rect.setAttribute('y',y-h/2);
+  rect.setAttribute('width',w);rect.setAttribute('height',h);
+  rect.setAttribute('rx',r);rect.setAttribute('ry',r);
+  rect.setAttribute('fill',fill);rect.setAttribute('stroke',stroke);rect.setAttribute('stroke-width','2');
+  if(dash)rect.setAttribute('stroke-dasharray','5,3');
+  return rect;
+}
+
+function drawDiamond(x,y,s,fill,stroke){
+  const d=ce('polygon');
+  d.setAttribute('points',`${x},${y-s/2} ${x+s/2+10},${y} ${x},${y+s/2} ${x-s/2-10},${y}`);
+  d.setAttribute('fill',fill);d.setAttribute('stroke',stroke);d.setAttribute('stroke-width','2');
+  return d;
+}
+
+function drawText(x,y,lines,size=11,color='#1e293b',weight='normal'){
+  const g=ce('g');
+  if(typeof lines==='string')lines=[lines];
+  const startY=y-((lines.length-1)*LINE_H)/2;
+  lines.forEach((l,i)=>{
+    const t=ce('text');t.setAttribute('x',x);t.setAttribute('y',startY+i*LINE_H);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size',size);
+    t.setAttribute('fill',color);t.setAttribute('font-weight',weight);
+    t.textContent=l;g.appendChild(t);
+  });
+  return g;
+}
+
+function getBox(NN,id){
+  const n=NN[id];if(!n)return null;
+  if(n.type==='decision'){
+    const hs=n.s/2+10,vs=n.s/2;
+    return{x:n.x,y:n.y,top:{x:n.x,y:n.y-vs},bottom:{x:n.x,y:n.y+vs},left:{x:n.x-hs,y:n.y},right:{x:n.x+hs,y:n.y}};
+  }
+  const w=n.w||140,h=n._h||n.h||40;
+  return{x:n.x,y:n.y,top:{x:n.x,y:n.y-h/2},bottom:{x:n.x,y:n.y+h/2},left:{x:n.x-w/2,y:n.y},right:{x:n.x+w/2,y:n.y}};
+}
+
+function preprocess(NN){
+  Object.values(NN).forEach(n=>{
+    if(n.type==='stage') n._h=autoH(n.text, 40);
+    else if(n.type==='talk') n._h=autoH(n.text, 40);
+    else if(n.type==='end') n._h=n.h||36;
+  });
+}
+
+function render(NN,EE){
+  preprocess(NN);
+  svg.innerHTML='';
+
+  const MARGIN=60;
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  Object.values(NN).forEach(n=>{
+    const w=n.w||((n.s||70)+20), h=n._h||n.h||(n.s||70);
+    const l=n.x-w/2, r=n.x+w/2, t=n.y-h/2, b=n.y+h/2;
+    if(l<minX)minX=l; if(r>maxX)maxX=r;
+    if(t<minY)minY=t; if(b>maxY)maxY=b;
+  });
+  const offsetX=-minX+MARGIN, offsetY=-minY+MARGIN;
+  const totalW=maxX-minX+MARGIN*2, totalH=maxY-minY+MARGIN*2;
+
+  canvasW=totalW; canvasH=totalH;
+  svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+  svg.setAttribute('width', Math.ceil(totalW*scale));
+  svg.setAttribute('height', Math.ceil(totalH*scale));
+  svg.style.display='block';
+
+  const root=ce('g');
+  root.setAttribute('transform',`translate(${offsetX},${offsetY})`);
+
+  // defs
+  const defs=ce('defs');
+  ['#64748b','#16a34a','#dc2626','#6a1b9a','#d97706','#0277bd','#e65100','#78909c'].forEach(c=>{
+    const m=ce('marker');
+    m.setAttribute('id','a'+c.replace('#',''));m.setAttribute('viewBox','0 0 10 10');
+    m.setAttribute('refX','10');m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');
+    m.setAttribute('orient','auto');
+    const p=ce('path');p.setAttribute('d','M0,0 L10,5 L0,10 z');p.setAttribute('fill',c);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  // 连线
+  const edgeGroup=ce('g');
+  EE.forEach(e=>{
+    const fromId=e[0],toId=e[1],label=e[2]||'',opts=e[3]||{};
+    const from=getBox(NN,fromId),to=getBox(NN,toId);
+    if(!from||!to)return;
+    let p1,p2;const dir=opts.dir||'bottom';
+    if(dir==='bottom'){p1=from.bottom;p2=to.top;}
+    else if(dir==='right'){p1=from.right;p2=to.left||to.top;}
+    else if(dir==='left'){p1=from.left;p2=to.right||to.top;}
+    else if(dir==='top'){p1=from.top;p2=to.bottom;}
+    if(!p2)p2=to.top;
+
+    const g=ce('g');const path=ce('path');let d;const mc='#64748b';
+    if(dir==='bottom'&&Math.abs(p1.x-p2.x)<3){
+      d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+    }else if(dir==='bottom'){
+      const my=(p1.y+p2.y)/2;
+      d=`M${p1.x},${p1.y} L${p1.x},${my} L${p2.x},${my} L${p2.x},${p2.y}`;
+    }else if(dir==='right'||dir==='left'){
+      if(opts.path==='curve'){
+        const mx=(p1.x+p2.x)/2;
+        d=`M${p1.x},${p1.y} C${mx},${p1.y} ${mx},${p2.y} ${p2.x},${p2.y}`;
+      }else if(opts.path==='up'||Math.abs(p1.y-p2.y)>20){
+        const mx=(p1.x+p2.x)/2;
+        d=`M${p1.x},${p1.y} L${mx},${p1.y} L${mx},${p2.y} L${p2.x},${p2.y}`;
+      }else{
+        d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+      }
+    }else{d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;}
+
+    path.setAttribute('d',d);path.setAttribute('fill','none');
+    path.setAttribute('stroke',mc);path.setAttribute('stroke-width','1.5');
+    path.setAttribute('marker-end','url(#a64748b)');
+    g.appendChild(path);
+
+    if(label){
+      const lx=(p1.x+p2.x)/2,ly=(p1.y+p2.y)/2;
+      const lines=label.split('\n');
+      const bw=Math.max(...lines.map(l=>l.length))*7+14;
+      const bh=lines.length*13+6;
+      const bg=ce('rect');
+      bg.setAttribute('x',lx-bw/2);bg.setAttribute('y',ly-bh/2);
+      bg.setAttribute('width',bw);bg.setAttribute('height',bh);
+      bg.setAttribute('fill','#fff');bg.setAttribute('rx','3');
+      g.appendChild(bg);
+      lines.forEach((line,i)=>{
+        const t=ce('text');t.setAttribute('x',lx);t.setAttribute('y',ly-((lines.length-1)*13)/2+i*13+1);
+        t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');
+        t.setAttribute('fill','#64748b');t.setAttribute('font-weight','500');
+        t.textContent=line;g.appendChild(t);
+      });
+    }
+    edgeGroup.appendChild(g);
+  });
+  root.appendChild(edgeGroup);
+
+  // 节点
+  const nodeGroup=ce('g');
+  Object.entries(NN).forEach(([id,n])=>{
+    const g=ce('g');g.setAttribute('id','node_'+id);
+    if(n.type==='stage'){
+      g.appendChild(drawRect(n.x,n.y,n.w,n._h,n.color,n.color,8));
+      g.appendChild(drawText(n.x,n.y+1,[n.text],12,'#fff','700'));
+    }else if(n.type==='talk'){
+      g.appendChild(drawRect(n.x,n.y,n.w,n._h,'#f0fdf4','#16a34a',6));
+      g.appendChild(drawText(n.x,n.y+1,n.text,10.5,'#15803d','500'));
+    }else if(n.type==='decision'){
+      g.appendChild(drawDiamond(n.x,n.y,n.s,'#fffbeb','#d97706'));
+      g.appendChild(drawText(n.x,n.y+1,n.text,11,'#92400e','600'));
+    }else if(n.type==='end'){
+      const h=n._h||n.h||36;
+      g.appendChild(drawRect(n.x,n.y,n.w,h,'#fff',n.color,16,true));
+      g.appendChild(drawText(n.x,n.y+1,n.text,11,n.color,'700'));
+    }
+    nodeGroup.appendChild(g);
+  });
+  root.appendChild(nodeGroup);
+
+  svg.appendChild(root);
+}
+
+render(N,E);
+</script>
+</body>
+</html>
