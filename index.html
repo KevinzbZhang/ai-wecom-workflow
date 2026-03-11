@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线索婚介广告销售流程图</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;background:#fff;color:#1a202c;display:flex;flex-direction:column}
+.hd{background:#1565c0;color:#fff;padding:14px 24px;text-align:center;flex-shrink:0}
+.hd h1{font-size:18px;margin-bottom:2px}
+.hd p{font-size:11px;opacity:.7}
+.toolbar{display:flex;gap:8px;align-items:center;padding:8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;flex-wrap:wrap}
+.toolbar .left{display:flex;gap:6px;align-items:center}
+.toolbar .right{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:12px;color:#64748b}
+.toolbar .right span{display:flex;align-items:center;gap:4px}
+.toolbar .right i{display:inline-block;width:16px;height:12px;border-radius:2px;border:2px solid}
+.btn{border:1px solid #cbd5e1;background:#fff;border-radius:6px;padding:4px 12px;font-size:12px;color:#475569;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:#f1f5f9;border-color:#94a3b8}
+.btn.active{background:#1565c0;color:#fff;border-color:#1565c0}
+.btn-group{display:flex;gap:0}
+.btn-group .btn{border-radius:0}
+.btn-group .btn:first-child{border-radius:6px 0 0 6px}
+.btn-group .btn:last-child{border-radius:0 6px 6px 0}
+.btn-group .btn+.btn{margin-left:-1px}
+.zoom-info{font-size:11px;color:#94a3b8;min-width:40px;text-align:center}
+.sep{width:1px;height:20px;background:#e2e8f0}
+.wrap{flex:1;overflow:scroll;position:relative}
+svg text{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;user-select:none}
+</style>
+</head>
+<body>
+<div class="hd">
+<h1>线索婚介广告销售流程图</h1>
+<p id="subtitle">角色：亮哥（腾讯广告官方运营顾问）｜ 完整 SOP ｜ v1.0</p>
+</div>
+<div class="toolbar">
+<div class="left">
+  <div class="btn-group">
+    <button class="btn active" id="btnV1" onclick="switchVersion('v1')">V1 完整版</button>
+    <button class="btn" id="btnV2" onclick="switchVersion('v2')">V2 快速拉群版</button>
+  </div>
+  <div class="sep"></div>
+  <button class="btn" onclick="zoomIn()">🔍+</button>
+  <button class="btn" onclick="zoomOut()">🔍−</button>
+  <button class="btn" onclick="zoomReset()">还原</button>
+  <span class="zoom-info" id="zoomInfo">100%</span>
+  <div class="sep"></div>
+  <button class="btn" onclick="fitScreen()">适应窗口</button>
+</div>
+<div class="right">
+  <span><i style="background:#e3f2fd;border-color:#1565c0"></i>阶段</span>
+  <span><i style="background:#f0fdf4;border-color:#16a34a"></i>话术/动作</span>
+  <span><i style="background:#fffbeb;border-color:#d97706;border-radius:0;transform:rotate(45deg) scale(.7)"></i>判断</span>
+  <span><i style="background:#fef2f2;border-color:#dc2626"></i>终态</span>
+</div>
+</div>
+<div class="wrap" id="wrap">
+<svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('canvas');
+const wrap=document.getElementById('wrap');
+let currentVersion='v1';
+let scale=1;
+let canvasW=1600, canvasH=2600;
+
+// ========== 缩放：直接改 SVG 的 width/height（缩放后的像素尺寸） ==========
+// SVG 的 viewBox 固定为画布逻辑尺寸，width/height 设为 逻辑尺寸*scale
+// 这样浏览器原生滚动条就能正确反映缩放后的内容大小
+function setScale(s){
+  scale=Math.max(0.2,Math.min(3,s));
+  svg.setAttribute('width', Math.ceil(canvasW*scale));
+  svg.setAttribute('height', Math.ceil(canvasH*scale));
+  document.getElementById('zoomInfo').textContent=Math.round(scale*100)+'%';
+}
+function zoomIn(){setScale(scale+0.15)}
+function zoomOut(){setScale(scale-0.15)}
+function zoomReset(){setScale(1);wrap.scrollTop=0;wrap.scrollLeft=0;}
+function fitScreen(){
+  const sw=wrap.clientWidth,sh=wrap.clientHeight;
+  setScale(Math.min(sw/canvasW,sh/canvasH)*0.95);
+  wrap.scrollTop=0;wrap.scrollLeft=0;
+}
+
+// Ctrl/Cmd + 滚轮缩放（焦点缩放）
+wrap.addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.metaKey){
+    e.preventDefault();
+    const rect=wrap.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const oldScale=scale;
+    const newScale=Math.max(0.2,Math.min(3,scale+(e.deltaY<0?0.08:-0.08)));
+    // 缩放前鼠标在画布上的逻辑坐标
+    const lx=(wrap.scrollLeft+mx)/oldScale;
+    const ly=(wrap.scrollTop+my)/oldScale;
+    setScale(newScale);
+    // 缩放后保持鼠标指向同一画布坐标
+    wrap.scrollLeft=lx*scale-mx;
+    wrap.scrollTop=ly*scale-my;
+  }
+},{passive:false});
+
+// ========== 布局参数 ==========
+const COL=220, ROW=90;
+function cx(col){return 200+col*COL}
+function cy(row){return 50+row*ROW}
+
+// ========== 自动计算节点高度 ==========
+// 根据文字行数自动算高度，确保文字不超出边框
+const LINE_H=14; // 每行高度
+const PAD_V=16;   // 上下留白总和
+function autoH(textLines, minH){
+  const lines=Array.isArray(textLines)?textLines:[textLines];
+  const needed=lines.length*LINE_H+PAD_V;
+  return Math.max(minH||0, needed);
+}
+
+// ========== V1 完整版节点数据 ==========
+const N_V1={
+  s1:       {type:'stage', x:cx(2),y:cy(0),  w:150, text:'S1 行业未知',color:'#1565c0'},
+  s1_talk:  {type:'talk',  x:cx(2),y:cy(1),  w:260, text:['💬 您好！我是运营经理亮哥～','请问您主要做什么行业的？']},
+  s1_d:     {type:'decision',x:cx(2),y:cy(2.2), s:70, text:'婚恋行业？'},
+
+  s2:       {type:'stage', x:cx(2),y:cy(3.4), w:160, text:'S2 子行业未知',color:'#1565c0'},
+  s2_talk:  {type:'talk',  x:cx(2),y:cy(4.4), w:280, text:['💬 您主要服务哪类人群？','适龄相亲 / 大龄再婚 / 夕阳红？']},
+  s2_d:     {type:'decision',x:cx(2),y:cy(5.6), s:70, text:'适龄相亲？'},
+
+  s9:       {type:'stage', x:cx(0),y:cy(5.6), w:180, text:'S9 非适龄相亲客户',color:'#c62828'},
+  s9_talk:  {type:'talk',  x:cx(0),y:cy(6.6), w:240, text:['💬 这类业务审核较严','我帮您拉群让专人对接']},
+  s9_d:     {type:'decision',x:cx(0),y:cy(7.8), s:70, text:'同意转接？'},
+  s9_pull_confirm:{type:'talk', x:cx(-0.6),y:cy(9), w:340, text:['💬 拉群确认话术（非适龄）：','我已经了解您的需求了。这样子，','我拉个群，跟行业老师们一起沟通','一下您的情况，给您提供同行案例','及为您打造最合适的投流方式。']},
+  s9_pull_after:{type:'talk', x:cx(-0.6),y:cy(10.8), w:340, text:['💬 拉群后话术（非适龄·群内发送）：','这是xx（客户/公司名）的专属服务群，','本群旨在高效协作，通过腾讯广告精准获量。','@工作人员 是腾讯直销团队的行业顾问','@客户 是xx（公司名）的负责人，','  是我们重点对接的客户~','我们会一起定制专属方案，全程跟进落地，','确保问题快速解决、效果最大化。']},
+  s9_end:   {type:'end',   x:cx(-0.6),y:cy(12.8), w:130,h:36, text:'🔀 拉群转专人',color:'#c62828'},
+
+  s3:       {type:'stage', x:cx(2),y:cy(7),   w:200, text:'S3 ADQ投放背景询问',color:'#1565c0'},
+  s3_talk:  {type:'talk',  x:cx(2),y:cy(8),   w:260, text:['💬 您之前有在腾讯投过广告吗？','比如朋友圈、视频号这些？']},
+  s3_d:     {type:'decision',x:cx(2),y:cy(9.2), s:70, text:'投放意向？'},
+
+  s4:       {type:'stage', x:cx(2),y:cy(10.6), w:170, text:'S4 确认门店规模',color:'#e65100'},
+  s4_talk:  {type:'talk',  x:cx(2),y:cy(11.6), w:270, text:['💬 您目前门店几家？哪些城市？','规模大→ADQ  规模小→按线索付费']},
+  s4_d:     {type:'decision',x:cx(2),y:cy(12.8), s:70, text:'覆盖≥3城市？'},
+
+  s5:       {type:'stage', x:cx(0),y:cy(14.2), w:160, text:'S5 确认CPL模式',color:'#e65100'},
+  s5_talk:  {type:'talk',  x:cx(0),y:cy(15.2), w:260, text:['💬 建议「按线索付费」模式：','• 有效线索才扣费','• 没线索不收钱，风险很低']},
+  s5_d:     {type:'decision',x:cx(0),y:cy(16.6), s:70, text:'接受CPL？'},
+  s5_pull_confirm:{type:'talk', x:cx(-0.6),y:cy(18), w:340, text:['💬 拉群确认话术（适龄）：','我看了下您的xx门店，目前xx线索成本','可以做到70-90，意向率高，线索货不对板','也都能扣减（非本人、不是单身等情况）。','现在属于年后投流红利期，也是婚恋行业','旺季，我拉个群让婚恋团队老师给您','电话详细沟通哈。']},
+  s5_pull_after:{type:'talk', x:cx(-0.6),y:cy(20.2), w:340, text:['💬 拉群后话术（适龄·群内发送）：','本群旨在高效协作，助力【XX婚恋】','的xx城市门店通过腾讯精准获客。','@didididuu & @Smm_poin：','  婚恋行业直客&运营；','@了凡：腾讯婚恋行业定向合作团队，','  两方携手打造"无线索，不扣费"的','  门店扶持项目，提供专业的获客策略、','  素材制作、数据分析的服务内容。','@客户：【XX婚恋】的负责人，','  我们重点的对接/负责客户。']},
+  end_cpl:  {type:'end',   x:cx(-0.6),y:cy(22.8), w:130,h:36, text:'✅ 对接服务商',color:'#16a34a'},
+
+  s6:       {type:'stage', x:cx(3),y:cy(14.2), w:150, text:'S6 开ADQ户',color:'#16a34a'},
+  s6_talk:  {type:'talk',  x:cx(3),y:cy(15.2), w:260, text:['💬 开户链接：tencentads.com/l/...','准备：营业执照+身份证+资质','有问题随时问我']},
+  s6_talk2: {type:'talk',  x:cx(3),y:cy(16.4), w:240, text:['⏰ 24h后跟进：','开户链接有开始申请了吗？']},
+  s6_d:     {type:'decision',x:cx(3),y:cy(17.6), s:70, text:'开户成功？'},
+  s6_talk3: {type:'talk',  x:cx(3),y:cy(18.8), w:240, text:['✅ 恭喜开户成功！🎉','方便把账户ID发我一下吗？']},
+
+  s7:       {type:'stage', x:cx(3),y:cy(20), w:170, text:'S7 已开户未投放',color:'#16a34a'},
+  s7_talk:  {type:'talk',  x:cx(3),y:cy(21), w:260, text:['💬 现在什么情况没开始投？','操作问题还是素材/预算在准备？']},
+  s7_talk2: {type:'talk',  x:cx(3),y:cy(22), w:260, text:['💬 首投建议：','1.选「收集销售线索」目标','2.短视频15-30秒 / 预算200-500/天']},
+  s7_d:     {type:'decision',x:cx(3),y:cy(23.4), s:70, text:'开始投放？'},
+
+  s8:       {type:'stage', x:cx(3),y:cy(24.8), w:170, text:'S8 ADQ投放中',color:'#16a34a'},
+  s8_talk:  {type:'talk',  x:cx(3),y:cy(25.8), w:280, text:['💬 本周数据：消耗XX/线索XX/成本XX','建议下周：【优化方向】','🔥 旺季提前备素材+提预算']},
+  s8_d:     {type:'decision',x:cx(3),y:cy(27.2), s:70, text:'投放效果？'},
+  end_ok:   {type:'end',   x:cx(4.2),y:cy(27.2), w:140,h:36, text:'✅ 持续优化服务',color:'#16a34a'},
+
+  s10:      {type:'stage', x:cx(0.6),y:cy(20), w:200, text:'S10 低意向与防流失跟进',color:'#6a1b9a'},
+  s10_talk: {type:'talk',  x:cx(0.6),y:cy(21), w:250, text:['💬 不着急，我持续给您分享','婚恋行业投放资讯和案例','后面有问题随时找我～']},
+  s10_d:    {type:'decision',x:cx(0.6),y:cy(22.4), s:70, text:'后续有意向？'},
+
+  end_out:  {type:'end',   x:cx(4),y:cy(2.2), w:130,h:36, text:'正常解答',color:'#78909c'},
+};
+
+const E_V1=[
+  ['s1','s1_talk'],['s1_talk','s1_d'],
+  ['s1_d','s2','是',{dir:'bottom'}],['s1_d','end_out','否',{dir:'right'}],
+  ['s2','s2_talk'],['s2_talk','s2_d'],
+  ['s2_d','s3','是',{dir:'bottom'}],['s2_d','s9','否',{dir:'left'}],
+  ['s9','s9_talk'],['s9_talk','s9_d'],
+  ['s9_d','s9_pull_confirm','同意',{dir:'left'}],['s9_pull_confirm','s9_pull_after'],['s9_pull_after','s9_end'],
+  ['s9_d','s10','暂不需要',{dir:'bottom',path:'up'}],
+  ['s3','s3_talk'],['s3_talk','s3_d'],
+  ['s3_d','s4','有兴趣',{dir:'bottom'}],['s3_d','s10','无意向',{dir:'left'}],['s3_d','s8','已在投放',{dir:'right',path:'curve'}],
+  ['s4','s4_talk'],['s4_talk','s4_d'],
+  ['s4_d','s5','否(<3城市)',{dir:'left'}],['s4_d','s6','是(≥3城市)',{dir:'right'}],
+  ['s5','s5_talk'],['s5_talk','s5_d'],
+  ['s5_d','s5_pull_confirm','接受',{dir:'left'}],['s5_pull_confirm','s5_pull_after'],['s5_pull_after','end_cpl'],
+  ['s5_d','s6','不接受\n想自投',{dir:'right'}],['s5_d','s10','暂无意向',{dir:'bottom',path:'up'}],
+  ['s6','s6_talk'],['s6_talk','s6_talk2'],['s6_talk2','s6_d'],
+  ['s6_d','s6_talk3','是',{dir:'bottom'}],['s6_talk3','s7'],
+  ['s7','s7_talk'],['s7_talk','s7_talk2'],['s7_talk2','s7_d'],
+  ['s7_d','s8','是',{dir:'bottom'}],['s7_d','s10','仍未行动',{dir:'left'}],
+  ['s8','s8_talk'],['s8_talk','s8_d'],
+  ['s8_d','end_ok','效果稳定',{dir:'right'}],['s8_d','s10','想停投',{dir:'left'}],
+  ['s10','s10_talk'],['s10_talk','s10_d'],['s10_d','s4','是',{dir:'right',path:'up'}],
+];
+
+// ========== V2 快速拉群版节点数据 ==========
+const N_V2={
+  // === S1 行业确认 ===
+  s1:       {type:'stage', x:cx(2),y:cy(0),  w:150, text:'S1 行业确认',color:'#1565c0'},
+  s1_talk:  {type:'talk',  x:cx(2),y:cy(1),  w:260, text:['💬 您好！我是运营经理亮哥～','请问您主要做什么行业的？']},
+  s1_d:     {type:'decision',x:cx(2),y:cy(2.2), s:70, text:'婚恋行业？'},
+  end_out:  {type:'end',   x:cx(4),y:cy(2.2), w:130,h:36, text:'正常解答',color:'#78909c'},
+
+  // === S2 子行业判断 ===
+  s2:       {type:'stage', x:cx(2),y:cy(3.4), w:160, text:'S2 子行业判断',color:'#1565c0'},
+  s2_talk:  {type:'talk',  x:cx(2),y:cy(4.4), w:280, text:['💬 您主要服务哪类人群？','适龄相亲 / 大龄再婚 / 夕阳红？']},
+  s2_d:     {type:'decision',x:cx(2),y:cy(5.6), s:70, text:'适龄相亲？'},
+
+  // === S3 适龄→快速摸底+拉群 ===
+  s3:       {type:'stage', x:cx(2),y:cy(7), w:200, text:'S3 快速摸底',color:'#e65100'},
+  s3_talk:  {type:'talk',  x:cx(2),y:cy(8), w:300, text:['💬 快速了解3个关键信息：','1. 门店数量/覆盖城市','2. 之前有没有投过腾讯广告','3. 目前最大的获客痛点是什么']},
+  s3_d:     {type:'decision',x:cx(2),y:cy(9.4), s:70, text:'客户配合沟通？'},
+
+  // === 拉群确认（适龄） ===
+  s3_pull_confirm:{type:'talk', x:cx(2),y:cy(10.8), w:340, text:['💬 拉群确认话术（适龄）：','我看了下您的xx门店，目前xx线索成本','可以做到70-90，意向率高，线索货不对板','也都能扣减（非本人、不是单身等情况）。','现在属于年后投流红利期，也是婚恋行业','旺季，我拉个群让婚恋团队老师给您','电话详细沟通哈。']},
+
+  // === 拉群后话术（适龄）===
+  s3_pull_after:{type:'talk', x:cx(2),y:cy(13), w:340, text:['💬 拉群后话术（适龄·群内@客户）：','本群旨在高效协作，助力【XX婚恋】','的xx城市门店通过腾讯精准获客。','@didididuu & @Smm_poin：','  婚恋行业直客&运营；','@了凡：腾讯婚恋行业定向合作团队，','  两方携手打造"无线索，不扣费"的','  门店扶持项目，提供专业的获客策略、','  素材制作、数据分析的服务内容。','@客户：【XX婚恋】的负责人，','  我们重点的对接/负责客户。']},
+
+  // === 群内服务（长期群） ===
+  s_group:  {type:'stage', x:cx(2),y:cy(15.8), w:200, text:'群内服务（长期群）',color:'#16a34a'},
+  s_group_talk:{type:'talk', x:cx(2),y:cy(17), w:300, text:['💬 群内由服务商团队主导：','• 投放方案定制与优化','• 素材制作指导','• 数据分析与周复盘','• 开户/充值/认证全流程协助','亮哥在群内辅助，不重复拉群']},
+  end_group:{type:'end',   x:cx(2),y:cy(18.6), w:180,h:36, text:'✅ 服务商长期承接',color:'#16a34a'},
+
+  // === S9 非适龄→快速转专人 ===
+  s9:       {type:'stage', x:cx(-0.2),y:cy(5.6), w:180, text:'非适龄相亲客户',color:'#c62828'},
+  s9_talk:  {type:'talk',  x:cx(-0.2),y:cy(6.6), w:260, text:['💬 这类业务审核较严，','我帮您拉个专属服务群']},
+  s9_pull_confirm:{type:'talk', x:cx(-0.2),y:cy(7.8), w:340, text:['💬 拉群确认话术（非适龄）：','我已经了解您的需求了。这样子，','我拉个群，跟行业老师们一起沟通','一下您的情况，给您提供同行案例','及为您打造最合适的投流方式。']},
+  s9_pull_after:{type:'talk', x:cx(-0.2),y:cy(9.6), w:340, text:['💬 拉群后话术（非适龄·群内@客户）：','这是xx（客户/公司名）的专属服务群，','本群旨在高效协作，通过腾讯广告精准获量。','@工作人员 是腾讯直销团队的行业顾问','@客户 是xx（公司名）的负责人，','  是我们重点对接的客户~','我们会一起定制专属方案，全程跟进落地，','确保问题快速解决、效果最大化。']},
+  s9_end:   {type:'end',   x:cx(-0.2),y:cy(11.6), w:180,h:36, text:'🔀 专人长期群承接',color:'#c62828'},
+
+  // === 低意向跟进（好友私聊） ===
+  s10:      {type:'stage', x:cx(4),y:cy(9.4), w:200, text:'低意向跟进（好友私聊）',color:'#6a1b9a'},
+  s10_talk: {type:'talk',  x:cx(4),y:cy(10.6), w:280, text:['💬 不着急，我持续给您分享','婚恋行业投放资讯和案例','后面有问题随时找我～','（好友关系保留，基础咨询入口）']},
+  s10_d:    {type:'decision',x:cx(4),y:cy(12.2), s:70, text:'后续有意向？'},
+
+  // === 好友私聊职责（已拉群客户） ===
+  s_friend: {type:'stage', x:cx(4),y:cy(15.8), w:220, text:'好友私聊（已拉群客户）',color:'#0277bd'},
+  s_friend_talk:{type:'talk', x:cx(4),y:cy(17), w:300, text:['💬 好友私聊承接内容：','• 基础咨询（政策/资质/账户问题）','• 简单问题直接答复','• 复杂问题引导客户到群内提问：','  「您这个问题群里的老师更专业，','  您方便在群里发一下吗，老师会','  第一时间给您解答～」','⚠️ AI企微无法后续主动@客户到群']},
+  end_friend:{type:'end',  x:cx(4),y:cy(18.6), w:180,h:36, text:'🔄 引导至群内服务',color:'#0277bd'},
+};
+
+const E_V2=[
+  ['s1','s1_talk'],['s1_talk','s1_d'],
+  ['s1_d','s2','是',{dir:'bottom'}],['s1_d','end_out','否',{dir:'right'}],
+  ['s2','s2_talk'],['s2_talk','s2_d'],
+  ['s2_d','s3','是',{dir:'bottom'}],['s2_d','s9','否',{dir:'left'}],
+  // 适龄快速路径
+  ['s3','s3_talk'],['s3_talk','s3_d'],
+  ['s3_d','s3_pull_confirm','配合',{dir:'bottom'}],
+  ['s3_d','s10','不配合/\n暂无意向',{dir:'right'}],
+  ['s3_pull_confirm','s3_pull_after'],['s3_pull_after','s_group'],
+  ['s_group','s_group_talk'],['s_group_talk','end_group'],
+  // 非适龄快速路径
+  ['s9','s9_talk'],['s9_talk','s9_pull_confirm'],
+  ['s9_pull_confirm','s9_pull_after'],['s9_pull_after','s9_end'],
+  // 低意向
+  ['s10','s10_talk'],['s10_talk','s10_d'],
+  ['s10_d','s3','是',{dir:'left',path:'up'}],
+  // 好友与群的关系
+  ['end_group','s_friend','已拉群客户\n后续私聊',{dir:'right'}],
+  ['s_friend','s_friend_talk'],['s_friend_talk','end_friend'],
+];
+
+// ========== 绘图引擎 ==========
+function ce(t){return document.createElementNS(NS,t)}
+
+function drawRect(x,y,w,h,fill,stroke,r=6,dash=false){
+  const rect=ce('rect');
+  rect.setAttribute('x',x-w/2);rect.setAttribute('y',y-h/2);
+  rect.setAttribute('width',w);rect.setAttribute('height',h);
+  rect.setAttribute('rx',r);rect.setAttribute('ry',r);
+  rect.setAttribute('fill',fill);rect.setAttribute('stroke',stroke);rect.setAttribute('stroke-width','2');
+  if(dash)rect.setAttribute('stroke-dasharray','5,3');
+  return rect;
+}
+
+function drawDiamond(x,y,s,fill,stroke){
+  const d=ce('polygon');
+  d.setAttribute('points',`${x},${y-s/2} ${x+s/2+10},${y} ${x},${y+s/2} ${x-s/2-10},${y}`);
+  d.setAttribute('fill',fill);d.setAttribute('stroke',stroke);d.setAttribute('stroke-width','2');
+  return d;
+}
+
+function drawText(x,y,lines,size=11,color='#1e293b',weight='normal'){
+  const g=ce('g');
+  if(typeof lines==='string')lines=[lines];
+  const startY=y-((lines.length-1)*LINE_H)/2;
+  lines.forEach((l,i)=>{
+    const t=ce('text');t.setAttribute('x',x);t.setAttribute('y',startY+i*LINE_H);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size',size);
+    t.setAttribute('fill',color);t.setAttribute('font-weight',weight);
+    t.textContent=l;g.appendChild(t);
+  });
+  return g;
+}
+
+function getBox(N,id){
+  const n=N[id];if(!n)return null;
+  if(n.type==='decision'){
+    const hs=n.s/2+10,vs=n.s/2;
+    return{x:n.x,y:n.y,top:{x:n.x,y:n.y-vs},bottom:{x:n.x,y:n.y+vs},left:{x:n.x-hs,y:n.y},right:{x:n.x+hs,y:n.y}};
+  }
+  const w=n.w||140,h=n._h||n.h||40;
+  return{x:n.x,y:n.y,top:{x:n.x,y:n.y-h/2},bottom:{x:n.x,y:n.y+h/2},left:{x:n.x-w/2,y:n.y},right:{x:n.x+w/2,y:n.y}};
+}
+
+// ========== 预处理：自动计算每个节点的实际高度 ==========
+function preprocess(N){
+  Object.values(N).forEach(n=>{
+    if(n.type==='stage'){
+      n._h=autoH(n.text, 40);
+    }else if(n.type==='talk'){
+      n._h=autoH(n.text, 40);
+    }else if(n.type==='end'){
+      n._h=n.h||36;
+    }
+    // decision 不需要，用 s 控制
+  });
+}
+
+function render(N,E){
+  // 先预处理高度
+  preprocess(N);
+
+  svg.innerHTML='';
+
+  // ===== 1. 计算所有节点的边界 =====
+  const MARGIN=60;
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  Object.values(N).forEach(n=>{
+    const w=n.w||((n.s||70)+20), h=n._h||n.h||(n.s||70);
+    const l=n.x-w/2, r=n.x+w/2, t=n.y-h/2, b=n.y+h/2;
+    if(l<minX)minX=l; if(r>maxX)maxX=r;
+    if(t<minY)minY=t; if(b>maxY)maxY=b;
+  });
+  const offsetX=-minX+MARGIN;
+  const offsetY=-minY+MARGIN;
+  const totalW=maxX-minX+MARGIN*2;
+  const totalH=maxY-minY+MARGIN*2;
+
+  // 更新全局画布尺寸
+  canvasW=totalW; canvasH=totalH;
+  // viewBox 是逻辑尺寸，width/height 是缩放后的像素尺寸
+  svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+  svg.setAttribute('width', Math.ceil(totalW*scale));
+  svg.setAttribute('height', Math.ceil(totalH*scale));
+  svg.style.display='block';
+
+  // ===== 2. 根 <g> 做整体平移 =====
+  const root=ce('g');
+  root.setAttribute('transform',`translate(${offsetX},${offsetY})`);
+
+  // defs
+  const defs=ce('defs');
+  ['#64748b','#16a34a','#dc2626','#6a1b9a','#d97706','#0277bd'].forEach(c=>{
+    const m=ce('marker');
+    m.setAttribute('id','a'+c.replace('#',''));m.setAttribute('viewBox','0 0 10 10');
+    m.setAttribute('refX','10');m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');
+    m.setAttribute('orient','auto');
+    const p=ce('path');p.setAttribute('d','M0,0 L10,5 L0,10 z');p.setAttribute('fill',c);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+
+  // ===== 3. 绘制连线 =====
+  const edgeGroup=ce('g');
+  E.forEach(e=>{
+    const fromId=e[0],toId=e[1],label=e[2]||'',opts=e[3]||{};
+    const from=getBox(N,fromId),to=getBox(N,toId);
+    if(!from||!to)return;
+    let p1,p2;const dir=opts.dir||'bottom';
+    if(dir==='bottom'){p1=from.bottom;p2=to.top;}
+    else if(dir==='right'){p1=from.right;p2=to.left||to.top;}
+    else if(dir==='left'){p1=from.left;p2=to.right||to.top;}
+    else if(dir==='top'){p1=from.top;p2=to.bottom;}
+    if(!p2)p2=to.top;
+
+    const g=ce('g');const path=ce('path');let d;const mc='#64748b';
+    if(dir==='bottom'&&Math.abs(p1.x-p2.x)<3){
+      d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+    }else if(dir==='bottom'){
+      const my=(p1.y+p2.y)/2;
+      d=`M${p1.x},${p1.y} L${p1.x},${my} L${p2.x},${my} L${p2.x},${p2.y}`;
+    }else if(dir==='right'||dir==='left'){
+      if(opts.path==='curve'){
+        const mx=(p1.x+p2.x)/2;
+        d=`M${p1.x},${p1.y} C${mx},${p1.y} ${mx},${p2.y} ${p2.x},${p2.y}`;
+      }else if(opts.path==='up'||Math.abs(p1.y-p2.y)>20){
+        const mx=(p1.x+p2.x)/2;
+        d=`M${p1.x},${p1.y} L${mx},${p1.y} L${mx},${p2.y} L${p2.x},${p2.y}`;
+      }else{
+        d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+      }
+    }else{d=`M${p1.x},${p1.y} L${p2.x},${p2.y}`;}
+
+    path.setAttribute('d',d);path.setAttribute('fill','none');
+    path.setAttribute('stroke',mc);path.setAttribute('stroke-width','1.5');
+    path.setAttribute('marker-end','url(#a64748b)');
+    g.appendChild(path);
+
+    if(label){
+      const lx=(p1.x+p2.x)/2,ly=(p1.y+p2.y)/2;
+      const lines=label.split('\n');
+      const bw=Math.max(...lines.map(l=>l.length))*6.5+12;
+      const bh=lines.length*13+6;
+      const bg=ce('rect');
+      bg.setAttribute('x',lx-bw/2);bg.setAttribute('y',ly-bh/2);
+      bg.setAttribute('width',bw);bg.setAttribute('height',bh);
+      bg.setAttribute('fill','#fff');bg.setAttribute('rx','3');
+      g.appendChild(bg);
+      lines.forEach((line,i)=>{
+        const t=ce('text');t.setAttribute('x',lx);t.setAttribute('y',ly-((lines.length-1)*13)/2+i*13+1);
+        t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');
+        t.setAttribute('fill','#64748b');t.setAttribute('font-weight','500');
+        t.textContent=line;g.appendChild(t);
+      });
+    }
+    edgeGroup.appendChild(g);
+  });
+  root.appendChild(edgeGroup);
+
+  // ===== 4. 绘制节点 =====
+  const nodeGroup=ce('g');
+  Object.entries(N).forEach(([id,n])=>{
+    const g=ce('g');g.setAttribute('id','node_'+id);
+    if(n.type==='stage'){
+      const h=n._h;
+      g.appendChild(drawRect(n.x,n.y,n.w,h,n.color,n.color,8));
+      g.appendChild(drawText(n.x,n.y+1,[n.text],12,'#fff','700'));
+    }else if(n.type==='talk'){
+      const h=n._h;
+      g.appendChild(drawRect(n.x,n.y,n.w,h,'#f0fdf4','#16a34a',6));
+      g.appendChild(drawText(n.x,n.y+1,n.text,10.5,'#15803d','500'));
+    }else if(n.type==='decision'){
+      g.appendChild(drawDiamond(n.x,n.y,n.s,'#fffbeb','#d97706'));
+      g.appendChild(drawText(n.x,n.y+1,n.text,11,'#92400e','600'));
+    }else if(n.type==='end'){
+      g.appendChild(drawRect(n.x,n.y,n.w,n._h,'#fff',n.color,16,true));
+      g.appendChild(drawText(n.x,n.y+1,n.text,11,n.color,'700'));
+    }
+    nodeGroup.appendChild(g);
+  });
+  root.appendChild(nodeGroup);
+
+  svg.appendChild(root);
+}
+
+function switchVersion(v){
+  currentVersion=v;
+  document.getElementById('btnV1').classList.toggle('active',v==='v1');
+  document.getElementById('btnV2').classList.toggle('active',v==='v2');
+  if(v==='v1'){
+    document.getElementById('subtitle').textContent='角色：亮哥（腾讯广告官方运营顾问）｜ 完整 SOP ｜ V1 完整版';
+    render(N_V1,E_V1);
+  }else{
+    document.getElementById('subtitle').textContent='角色：亮哥 ｜ 快速拉群版 ｜ V2 — 尽快引导至服务商长期群，好友保留基础咨询';
+    render(N_V2,E_V2);
+  }
+  wrap.scrollTop=0;wrap.scrollLeft=0;
+}
+
+// 初始渲染
+render(N_V1,E_V1);
+</script>
+</body>
+</html>
